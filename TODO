@@ -1,0 +1,38 @@
++++++++++++++++++++++++++++++++++++++++++++++
+EFFICIENT MATRIX INVERSION AND MULTIPLICATION
++++++++++++++++++++++++++++++++++++++++++++++
+
+Multiplication
+==============
+
+[TODO :High:] Complete code and measurements.
+
+	1. Performance monitoring of serial code.
+	
+	2. Code parallelization.
+
+[/TODO]
+
+
+[TODO :Medium:] Project presentation. 
+
+	1. Report (**LaTeX**).
+
+	2. Charts (**Beamer template available**).
+
+	3. Speech.
+
+[/TODO]
+
+[TODO :Low:] Fill README file [/TODO]
+
+[IDEA :Low:]  
+ 
+	Write code to unify conventions used by Luca and me.
+	This might be done either after the project report
+	is submitted or for future (**personal**) expansion
+	of the project.
+
+[/IDEA]
+
+	
