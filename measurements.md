@@ -57,6 +57,6 @@ $$
 S(n) = \frac{1}{1-p+\frac{p}{n}}
 $$
 
-since <img src="https://render.githubusercontent.com/render/math?math=S \leq S(n)">.
+since $S \leq S(n)$.
 
 
