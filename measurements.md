@@ -12,7 +12,7 @@ where $S$ is the overall obtainable speed-up, $p$ is the fraction of paralleliza
 
 We estimate the parallelizable fraction of code through a profiler (i.e., a program that collects and arranges statistics on a piece of code). The default profiler available on Linux is `gprof` ( https://ftp.gnu.org/old-gnu/Manuals/gprof/ ). We eploy the latter to assess which functions are called by the driver program, and how much execution time each of them consumes, respectively. A [flat profile](https://ftp.gnu.org/old-gnu/Manuals/gprof/html_chapter/gprof_5.html#SEC11) of our program can be generated throught the following steps:
 
-1. Compile and link the program with profiling enabled
+1. Compile and link the program with profiling enabled (i.e.,via the `-pg` flag)
    
    ```bash
    $ gcc -Wall -o test "/path/to/test.c" -pg
@@ -47,7 +47,7 @@ Each sample counts as 0.01 seconds.
   0.00     12.65     0.00        2     0.00     0.01  f_matrix_init
 ```
 
-in this case the functions `f_matrix_insert` and `mprod_rowcol` take up much the total execution time. The first function is a helper for inserting elements inside a matrix, while the second is the one implementing actual matrix multiplication. Since only the latter function can be parallelized, we assume $p = 56.14\%$.
+in this case the functions `f_matrix_insert` and `mprod_rowcol` take up much of the total execution time. The first function is a helper for inserting elements inside a matrix, while the second is the one implementing actual matrix multiplication. Since only the latter function can be parallelized, we assume $p = 56.14\%$.
 
 ### Estimating theoretical maximum speed-up
 
@@ -57,6 +57,6 @@ $$
 S(n) = \frac{1}{1-p+\frac{p}{n}}
 $$
 
-since $S \leq S(n)$.
+since <img src="https://render.githubusercontent.com/render/math?math=S \leq S(n)">.
 
 
