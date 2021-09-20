@@ -1,0 +1,51 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 49.13      4.32     4.32   117649     0.00     0.00  mprod_rowcol
+ 34.31      7.33     3.02 522746880     0.00     0.00  f_matrix_insert
+ 11.51      8.35     1.01   352944     0.00     0.00  msum
+  2.51      8.57     0.22   117649     0.00     0.00  f_matrix_calloc
+  1.25      8.68     0.11    19608     0.00     0.00  f_matrix_join
+  1.03      8.77     0.09   411770     0.00     0.00  f_matrix_free
+  0.46      8.81     0.04        2     0.02     0.02  f_matrix_randr
+  0.00      8.81     0.00   490203     0.00     0.00  f_block_alloc
+  0.00      8.81     0.00   490203     0.00     0.00  f_matrix_alloc
+  0.00      8.81     0.00   254906     0.00     0.00  f_block_free
+  0.00      8.81     0.00   156864     0.00     0.00  f_matrix_submatrix
+  0.00      8.81     0.00        2     0.00     0.01  f_matrix_init
+  0.00      8.81     0.00        1     0.00     8.76  mprod_strassen
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2020 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.

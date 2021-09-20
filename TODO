@@ -13,7 +13,6 @@ Multiplication
 
 [/TODO]
 
-
 [TODO :Medium:] Project presentation. 
 
 	1. Report (**LaTeX**).
@@ -34,5 +33,14 @@ Multiplication
 	of the project.
 
 [/IDEA]
+
+[BUG :High:]
+	
+	Function f_matrix_insert being called into nested
+	loops slows down matrix multiplication because of
+	unnecessary branch control.
+
+[/BUG]
+
 
 	
