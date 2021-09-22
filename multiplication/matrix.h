@@ -26,7 +26,6 @@ struct fmat_t *f_matrix_join(struct fmat_t *m1,
 			     struct fmat_t *m2,
 			     struct fmat_t *m3,
 			     struct fmat_t *m4);
-//int f_matrix_cmp(struct fmat_t *A, struct fmat_t *B);
 void f_matrix_pprint(struct fmat_t *m);
 float *f_matrix_randr(size_t n, size_t l, size_t u);
 
@@ -99,7 +98,9 @@ void f_matrix_free(struct fmat_t *m) {
 
 void f_matrix_insert(struct fmat_t *m, int ix, int iy, float val) {
 
-        if ((ix < 0) || (ix > (m->size1 - 1))) {
+	/* Safe */
+	/*
+	if ((ix < 0) || (ix > (m->size1 - 1))) {
                 printf("Row index is out of bound.\n");
         }
         else if ((iy < 0) || (iy > (m->size2 - 1))) {
@@ -109,6 +110,10 @@ void f_matrix_insert(struct fmat_t *m, int ix, int iy, float val) {
                 dd = m->data;
                 dd[ix * m->tda + iy] = val;
         }
+	*/
+
+	/* unsafe */
+	(m->data)[ix * m->tda + iy] = val;
 }
 
 void f_matrix_init(struct fmat_t *m, float *v, int len) {
@@ -181,7 +186,9 @@ struct fmat_t *f_matrix_submatrix(struct fmat_t *m,
 
 struct fmat_t *f_matrix_join(struct fmat_t *m1,
 		             struct fmat_t *m2,
-			     struct fmat_t *m3,									                     struct fmat_t *m4) {
+			     struct fmat_t *m3,
+			     struct fmat_t *m4) 
+{
 	
 	if ((m1 == NULL) || (m2 == NULL) ||
 	    (m3 == NULL) || (m4 == NULL)) {
@@ -222,31 +229,6 @@ struct fmat_t *f_matrix_join(struct fmat_t *m1,
 	return m;
 }
 
-/*
-int f_matrix_cmp(struct fmat_t *A, struct fmat_t *B) {
-
-	if (!((A->size1 == B->size1) && (A->size2 == B->size2))) {
-		printf("ERROR: matrix dimensions are different.\n");
-		printf("Cannot perform comparison between matrices.\n");
-		exit(1);
-	}
-	
-	struct fmat_t *C;
-	C = msum(A, B, 1);
-	
-	int count = 0;
-	for (int i = 0; i < C->size1; i++) {
-		for (int j = 0; j < C->size2; j++) {
-			count += (C->data)[i * C->tda + j];
-			}
-		}
-	}
-	
-	f_matrix_free(C);
-
-	return (count < 10e-3);
-}
-*/
 
 void f_matrix_pprint(struct fmat_t *m) {
 

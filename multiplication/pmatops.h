@@ -5,17 +5,17 @@
 #define MAX(a, b) ( ((a) > (b)) ? (a) : (b) )
 #endif
 
-struct fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int threads);
-struct fmat_t *mprod_rowcol(struct fmat_t *A, struct fmat_t *B, int threads);
-struct fmat_t *mprod_strassen(struct fmat_t *A, struct fmat_t *B, int threads);
-struct fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int block_size, int threads);
+struct fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int n_threads);
+struct fmat_t *mprod_rowcol(struct fmat_t *A, struct fmat_t *B, int n_threads);
+struct fmat_t *mprod_strassen(struct fmat_t *A, struct fmat_t *B, int n_threads);
+struct fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int n_blocks, int n_threads);
 
 /****************************************************************************
  * Source code
  * *************************************************************************/
 
 struct 
-fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int threads) {
+fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int n_threads) {
 	
 	if ((A == NULL) || (B == NULL)) {return NULL;}
         
@@ -36,7 +36,7 @@ fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int threads) {
 	ddb = B->data;
 	ddc = C->data;
 	
-	int chunks = MAX( 1, (int)(ceil(A->block->size / threads)) );
+	int chunks = MAX( 1, (int)(ceil(A->block->size / n_threads)) );
 	int i, j;
 	#pragma omp parallel for \
 	private(i, j) shared(A, B, C, dda, ddb, ddc, chunks) \
@@ -56,7 +56,7 @@ fmat_t *msum(struct fmat_t *A, struct fmat_t *B, int issub, int threads) {
 struct 
 fmat_t *mprod_rowcol(struct fmat_t *A,
 		     struct fmat_t *B,
-		     int threads) {
+		     int n_threads) {
 	
 	if ((A == NULL) || (B == NULL)) {return NULL;}
 	
@@ -66,7 +66,7 @@ fmat_t *mprod_rowcol(struct fmat_t *A,
 		return NULL;
 	}
 	struct fmat_t *C;
-	C = f_matrix_calloc(A->size1, B->size2, threads);
+	C = f_matrix_calloc(A->size1, B->size2, n_threads);
 	if (C == NULL) {
 		return NULL;
 	}
@@ -76,12 +76,15 @@ fmat_t *mprod_rowcol(struct fmat_t *A,
 	ddb = B->data;
 	ddc = C->data;
 	
-	int chunks = MAX( 1, (int)(ceil(B->size2 / threads)) );
+	int chunks = MAX( 1, (int)(ceil(B->size2 / n_threads)) );
 	int i, j, k;
+	#pragma omp parallel for \
+	private(i, j, k) shared(A, B, C, dda, ddb, ddc, chunks)\
+	schedule(dynamic, chunks)
 	for (i = 0; i < A->size1; i++) {
-		#pragma omp parallel for \
+		/*#pragma omp parallel for \
 		private(j, k) shared(A, B, C, dda, ddb, ddc, chunks)\
-		schedule(dynamic, chunks)
+		schedule(dynamic, chunks)*/
 		for (j = 0; j < B->size2; j++) {
 			for (k = 0; k < B->size1; k++) {
 				ddc[i * C->tda + j] += dda[i * A->tda + k] * ddb[k * B->tda + j];
@@ -95,7 +98,7 @@ fmat_t *mprod_rowcol(struct fmat_t *A,
 struct
 fmat_t *mprod_strassen(struct fmat_t *A,
 		       struct fmat_t *B,
-		       int threads) {
+		       int n_threads) {
 	if (!((A->size1 == A->size2) && 
 	   (A->size1 == B->size1) &&
 	   (A->size2 == B->size2))) {
@@ -112,7 +115,7 @@ fmat_t *mprod_strassen(struct fmat_t *A,
 	
 	
 	if (A->size1 <= 256) {
-		return mprod_rowcol(A, B, threads);
+		return mprod_rowcol(A, B, n_threads);
 	}
 	
 
@@ -146,35 +149,35 @@ fmat_t *mprod_strassen(struct fmat_t *A,
 	}
 
 	/* P1 */
-	tmpA = msum(A11, A22, 0, threads);
-	tmpB = msum(B11, B22, 0, threads);
-	P1 = mprod_strassen(tmpA, tmpB, threads);
+	tmpA = msum(A11, A22, 0, n_threads);
+	tmpB = msum(B11, B22, 0, n_threads);
+	P1 = mprod_strassen(tmpA, tmpB, n_threads);
 	
 	/* P2 */
-	tmpA = msum(A21, A22, 0, threads);
-	P2 = mprod_strassen(tmpA, B11, threads);
+	tmpA = msum(A21, A22, 0, n_threads);
+	P2 = mprod_strassen(tmpA, B11, n_threads);
 	
 	/* P3 */
-	tmpB = msum(B12, B22, 1, threads);
-	P3 = mprod_strassen(A11, tmpB, threads);
+	tmpB = msum(B12, B22, 1, n_threads);
+	P3 = mprod_strassen(A11, tmpB, n_threads);
 	
 	/* P4 */
-	tmpB = msum(B21, B11, 1, threads);
-	P4 = mprod_strassen(A22, tmpB, threads);
+	tmpB = msum(B21, B11, 1, n_threads);
+	P4 = mprod_strassen(A22, tmpB, n_threads);
 	
 	/* P5 */
-	tmpA = msum(A11, A12, 0, threads);
-	P5 = mprod_strassen(tmpA, B22, threads);
+	tmpA = msum(A11, A12, 0, n_threads);
+	P5 = mprod_strassen(tmpA, B22, n_threads);
 	
 	/* P6 */
-	tmpA = msum(A21, A11, 1, threads);
-	tmpB = msum(B11, B12, 0, threads);
-	P6 = mprod_strassen(tmpA, tmpB, threads);
+	tmpA = msum(A21, A11, 1, n_threads);
+	tmpB = msum(B11, B12, 0, n_threads);
+	P6 = mprod_strassen(tmpA, tmpB, n_threads);
 	
 	/* P7 */
-	tmpA = msum(A12, A22, 1, threads);
-	tmpB = msum(B21, B22, 0, threads);
-	P7 = mprod_strassen(tmpA, tmpB, threads);
+	tmpA = msum(A12, A22, 1, n_threads);
+	tmpB = msum(B21, B22, 0, n_threads);
+	P7 = mprod_strassen(tmpA, tmpB, n_threads);
 	
 	/* Check */
 	/*f_matrix_pprint(A11);
@@ -193,14 +196,14 @@ fmat_t *mprod_strassen(struct fmat_t *A,
 	f_matrix_pprint(P6);
 	f_matrix_pprint(P7);*/
 
-	C11 = msum(P1, P4, 0, threads);
-	C11 = msum(C11, P5, 1, threads);
-	C11 = msum(C11, P7, 0, threads);
-	C12 = msum(P3, P5, 0, threads);
-	C21 = msum(P2, P4, 0, threads);
-	C22 = msum(P1, P3, 0, threads);
-	C22 = msum(C22, P2, 1, threads);
-	C22 = msum(C22, P6, 0, threads);
+	C11 = msum(P1, P4, 0, n_threads);
+	C11 = msum(C11, P5, 1, n_threads);
+	C11 = msum(C11, P7, 0, n_threads);
+	C12 = msum(P3, P5, 0, n_threads);
+	C21 = msum(P2, P4, 0, n_threads);
+	C22 = msum(P1, P3, 0, n_threads);
+	C22 = msum(C22, P2, 1, n_threads);
+	C22 = msum(C22, P6, 0, n_threads);
 
 	/*f_matrix_pprint(C11);
 	f_matrix_pprint(C12);
@@ -239,31 +242,33 @@ fmat_t *mprod_strassen(struct fmat_t *A,
 
 
 struct
-fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int block_size, int threads) {
+fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int n_blocks, int n_threads) {
+
+	if ((int)n_blocks < 1) {
+		printf("The number of blocks must me a positive integer number.\n");
+		return NULL;
+	}
 
 	if ((A == NULL) || (B == NULL)) {return NULL;}
         if ((A->size1 != B->size1) ||  
 	    (A->size2 != B->size2) || 
 	    (A->size1 != A->size2) ||
-       	    ((A->size1 % block_size) != 0))	{
+       	    ((A->size1 % n_blocks) != 0))	{
 		printf("Matrix must be square and its dimensions must be multiple of block_size.\n");
 		return NULL;
 	}
-
+	
 	struct fmat_t *C;
-	C = f_matrix_calloc(A->size1, B->size2, threads);
+	C = f_matrix_calloc(A->size1, B->size2, n_threads);
 	if (C == NULL) {
 		return NULL;
 	}
-
-	float *dda, *ddb, *ddc;
-	dda = A->data;
-	ddb = B->data;
-	ddc = C->data;
-
+	
+	//size_t block_size = MAX(1, A->size1 / n_blocks);
 	size_t N = A->size1;
-	struct fmat_t *AA, *BB, *CC;
+	size_t block_size = N / n_blocks;
 
+	//struct fmat_t *AA, *BB, *CC;
 	#pragma omp parallel
 	{
 	
@@ -276,15 +281,18 @@ fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int block_size, int threa
 			for(int k = 0; k < N; k += block_size) {
 				//printf("--> %d <--\n", k);
 				//printf("submat at %d, %d\n", i + 1, k + 1 );
-				AA = f_matrix_submatrix(A, i, k, block_size, block_size);
-				BB = f_matrix_submatrix(B, k, j, block_size, block_size);
-				CC = f_matrix_submatrix(C, i, j, block_size, block_size);
+				//AA = f_matrix_submatrix(A, i, k, block_size, block_size);
+				//BB = f_matrix_submatrix(B, k, j, block_size, block_size);
+				//CC = f_matrix_submatrix(C, i, j, block_size, block_size);
 
 				float *dda, *ddb, *ddc;
-				dda = AA->data;
-				ddb = BB->data;
-				ddc = CC->data;
-
+				//dda = AA->data;
+				//ddb = BB->data;
+				//ddc = CC->data;
+				
+				dda = A->data + (i * A->tda + k);
+				ddb = B->data + (k * B->tda + j);
+				ddc = C->data + (i * C->tda + j);
 				#pragma omp task depend (in: dda, ddb) depend(inout: ddc)
 				{
 
@@ -296,7 +304,7 @@ fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int block_size, int threa
 							//printf("AA[%d][%d] : %f * ", ii + i + 1, kk + k + 1, dda[ii * AA->tda + kk]);
 							//printf(" BB[%d][%d] : %f = ", kk + k + 1, jj + j + 1, ddb[kk * BB->tda + jj]);
 							//printf(" CC[%d][%d] : %f \n", ii + i + 1, jj + j + 1, ddc[ii * CC->tda + jj]);
-							ddc[ii * CC->tda + jj] += dda[ii * AA->tda + kk] * ddb[kk * BB->tda + jj];
+							ddc[ii * C->tda + jj] += dda[ii * A->tda + kk] * ddb[kk * B->tda + jj];
 							//printf(" CC[%d][%d] : %f\n", ii + i + 1, jj + j + 1, ddc[ii * CC->tda + jj]);
 						}
 					}
@@ -312,9 +320,9 @@ fmat_t *mprod_task(struct fmat_t *A, struct fmat_t *B, int block_size, int threa
 	
 	} /* end of parallel */
 
-	f_matrix_free(CC);
-	f_matrix_free(BB);
-	f_matrix_free(AA);
+	//f_matrix_free(CC);
+	//f_matrix_free(BB);
+	//f_matrix_free(AA);
 	
 	return C;
 }
